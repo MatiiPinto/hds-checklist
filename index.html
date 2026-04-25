@@ -20,9 +20,9 @@
   --shadow:0 2px 12px rgba(29,45,91,0.10);
   --radius:12px;
 }
-html,body{font-family:Verdana,Geneva,Tahoma,sans-serif;background:var(--bg);color:#1e293b;height:100%;overflow:hidden;}
+html,body{font-family:Verdana,Geneva,Tahoma,sans-serif;background:var(--bg);color:#1e293b;height:100%;height:-webkit-fill-available;overflow:hidden;}
 /* ─── APP SHELL ─── */
-.app{display:flex;flex-direction:column;height:100vh;max-width:600px;margin:0 auto;position:relative;}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;height:-webkit-fill-available;max-width:600px;margin:0 auto;position:relative;}
 /* ─── TOP BAR ─── */
 .topbar{background:var(--inst);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2);}
 .topbar-logo{display:flex;align-items:center;gap:7px;flex:1;min-width:0;}
@@ -190,16 +190,16 @@ html,body{font-family:Verdana,Geneva,Tahoma,sans-serif;background:var(--bg);colo
   </div>
 
   <!-- TAB: FORM -->
-  <div class="tab-content active" id="tab-form" style="overflow:hidden;display:flex;flex-direction:column;flex:1;">
+  <div class="tab-content active" id="tab-form">
 
     <!-- META CARD -->
     <div class="meta-card" style="margin:8px 8px 0;">
       <div class="meta-toggle" onclick="toggleMeta()">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D2D5B" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span class="meta-toggle-title">Identificación del Recinto</span>
-        <span class="meta-toggle-icon open" id="metaIcon">⌄</span>
+        <span class="meta-toggle-icon" id="metaIcon">⌄</span>
       </div>
-      <div class="meta-fields" id="metaFields">
+      <div class="meta-fields hidden" id="metaFields">
         <div class="meta-group">
           <label class="meta-label">Piso</label>
           <input class="meta-input" id="m-piso" type="text" placeholder="Ej: 3" oninput="onMeta('piso',this.value)">
@@ -232,12 +232,12 @@ html,body{font-family:Verdana,Geneva,Tahoma,sans-serif;background:var(--bg);colo
   </div>
 
   <!-- TAB: SUMMARY -->
-  <div class="tab-content" id="tab-summary" style="overflow:hidden;display:flex;flex-direction:column;flex:1;">
+  <div class="tab-content" id="tab-summary">
     <div class="scroll-area" id="summaryContent"></div>
   </div>
 
   <!-- TAB: EXPORT -->
-  <div class="tab-content" id="tab-export" style="overflow:hidden;display:flex;flex-direction:column;flex:1;">
+  <div class="tab-content" id="tab-export">
     <div class="scroll-area">
       <div class="export-wrap">
         <div class="export-card">
@@ -448,8 +448,13 @@ let state = {
   openSections: new Set(),
   meta: { piso:'', servicio:'', recinto:'', codigo:'', fecha: new Date().toISOString().slice(0,10), inspector:'' },
   data: {},
-  metaOpen: true
+  metaOpen: false  // colapsado por defecto para dar espacio al checklist
 };
+
+// Retorna todos los IDs de sección del checklist actual
+function allSectionIds() {
+  return new Set(CHECKLISTS[state.cl].sections.map(s => s.id));
+}
 
 // ─── STORAGE ───
 function storageKey() { return 'hds_cl2_' + state.cl; }
@@ -460,12 +465,18 @@ function saveState() {
 function loadState() {
   try {
     const raw = localStorage.getItem(storageKey());
-    if (!raw) return;
+    if (!raw) {
+      // Primera vez: abrir todas las secciones por defecto
+      state.openSections = allSectionIds();
+      return;
+    }
     const p = JSON.parse(raw);
     state.meta = Object.assign({ piso:'', servicio:'', recinto:'', codigo:'', fecha: new Date().toISOString().slice(0,10), inspector:'' }, p.meta || {});
     state.data = p.data || {};
-    state.openSections = new Set(p.openSections || []);
-  } catch(e) { state.data = {}; }
+    // Si no hay secciones guardadas, abrir todas
+    const saved = p.openSections || [];
+    state.openSections = saved.length > 0 ? new Set(saved) : allSectionIds();
+  } catch(e) { state.data = {}; state.openSections = allSectionIds(); }
 }
 
 // ─── KEY ───
@@ -805,7 +816,7 @@ function setTab(tab) {
 // ─── CHECKLIST SWITCH ───
 function setCl(cl) {
   state.cl = cl;
-  state.openSections = new Set();
+  state.openSections = allSectionIds(); // default todas abiertas, loadState puede sobrescribir
   loadState();
   document.getElementById('btn-func').classList.toggle('active', cl==='func');
   document.getElementById('btn-inst').classList.toggle('active', cl==='inst');
