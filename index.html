@@ -991,60 +991,227 @@ function buildPdfHtml() {
     </div>`;
 }
 
+// Genera el PDF directamente con jsPDF (sin html2canvas — funciona en iOS)
+function buildPdfDirect() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+  // Sanitiza texto para jsPDF (Latin-1 + español)
+  const s = str => (str || '').replace(/[^ -ÿ]/g, '').trim();
+
+  const cl  = CHECKLISTS[state.cl];
+  const m   = state.meta;
+  const ost = overallStats();
+  const pctStr = ost.pct !== null ? ost.pct + '%' : '--';
+  const pctRgb = ost.pct === null ? [100,116,139]
+               : ost.pct >= 80   ? [22,163,74]
+               : ost.pct >= 60   ? [217,119,6]
+               :                   [220,38,38];
+
+  const PW=210, PH=297, ML=12, MR=12, MT=12, MB=14;
+  const CW = PW - ML - MR;
+  let y = MT;
+
+  const ensureSpace = (need) => {
+    if (y + need > PH - MB) { doc.addPage(); y = MT; }
+  };
+
+  // ── ENCABEZADO ──────────────────────────────────────────
+  doc.setFillColor(29,45,91);
+  doc.rect(ML, y, CW, 12, 'F');
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(11);
+  doc.setTextColor(255,255,255);
+  doc.text('Hospital del Salvador', ML+3, y+5);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text('Unidad de Farmacia', ML+3, y+9.5);
+
+  // Badge cumplimiento
+  doc.setFillColor(...pctRgb);
+  doc.roundedRect(PW-MR-26, y+1, 26, 10, 2,2, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.setTextColor(255,255,255);
+  doc.text(pctStr, PW-MR-13, y+7.5, {align:'center'});
+  doc.setFontSize(5.5); doc.setFont('helvetica','normal');
+  doc.text('CUMPLIMIENTO', PW-MR-13, y+10.5, {align:'center'});
+  y += 14;
+
+  // Subtítulo
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.setTextColor(29,45,91);
+  doc.text('Pauta de Visita -- ' + s(cl.label) + ' de Farmacia', ML, y+4);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7);
+  doc.setTextColor(100,116,139);
+  doc.text(s(cl.badge), ML, y+8.5);
+  y += 13;
+
+  // ── FICHA DE IDENTIFICACIÓN ──────────────────────────────
+  const idH = 16;
+  doc.setFillColor(240,244,250);
+  doc.rect(ML, y, CW, idH, 'F');
+  doc.setDrawColor(203,213,225); doc.setLineWidth(0.3);
+  doc.rect(ML, y, CW, idH);
+  const col4 = CW/4;
+  doc.line(ML, y+idH/2, ML+CW, y+idH/2);
+  doc.line(ML+col4, y, ML+col4, y+idH/2);
+  doc.line(ML+col4*2, y, ML+col4*2, y+idH/2);
+  doc.line(ML+col4*3, y, ML+col4*3, y+idH/2);
+  doc.line(ML+CW/2, y+idH/2, ML+CW/2, y+idH);
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(30,41,59);
+  doc.text('Piso: '      + (s(m.piso)      || '--'), ML+2,         y+5);
+  doc.text('Servicio: '  + (s(m.servicio)  || '--'), ML+col4+2,    y+5);
+  doc.text('Fecha: '     + (s(m.fecha)     || '--'), ML+col4*2+2,  y+5);
+  doc.text('QF: '        + (s(m.inspector) || '--'), ML+col4*3+2,  y+5);
+  doc.text('Recinto: '   + (s(m.recinto)   || '--'), ML+2,         y+idH/2+5);
+  doc.text('Cod. plano: '+ (s(m.codigo)    || '--'), ML+CW/2+2,    y+idH/2+5);
+  y += idH + 5;
+
+  // ── SECCIONES ───────────────────────────────────────────
+  const CTXT = CW - 30;   // columna texto
+  const CSI=10, CNO=10, CNA=10;
+  const xSI = ML + CTXT;
+  const xNO = xSI + CSI;
+  const xNA = xNO + CNO;
+
+  cl.sections.forEach(sec => {
+    const st = sectionStats(sec);
+    ensureSpace(14);
+
+    // Cabecera sección
+    doc.setFillColor(29,45,91);
+    doc.rect(ML, y, CW, 8, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.setTextColor(255,255,255);
+    doc.text(s(sec.title), ML+2, y+5.5);
+    doc.setFontSize(7);
+    doc.text('SI',  xSI+CSI/2, y+5.5, {align:'center'});
+    doc.text('NO',  xNO+CNO/2, y+5.5, {align:'center'});
+    doc.text('NA',  xNA+CNA/2, y+5.5, {align:'center'});
+    y += 8;
+
+    let rowIdx = 0;
+
+    sec.items.forEach((item, idx) => {
+      const d = getItem(sec.id, idx);
+
+      // Encabezado agrupador (group)
+      if (item.group) {
+        ensureSpace(7);
+        doc.setFillColor(220,227,240);
+        doc.rect(ML, y, CW, 6, 'F');
+        doc.setDrawColor(176,184,204); doc.setLineWidth(0.2);
+        doc.rect(ML, y, CW, 6);
+        doc.setFont('helvetica','bold'); doc.setFontSize(6.5);
+        doc.setTextColor(29,45,91);
+        doc.text(s(item.t), ML+3, y+4.2);
+        y += 6; return;
+      }
+
+      const indent = item.indent ? 5 : 0;
+      const textW  = CTXT - indent - 4;
+      doc.setFont('helvetica','normal'); doc.setFontSize(7);
+      const lines = doc.splitTextToSize(s(item.t), textW);
+      let rowH = Math.max(8, lines.length*4+4);
+
+      let noteLines = [];
+      if (d.note) {
+        doc.setFontSize(6);
+        noteLines = doc.splitTextToSize('Obs: '+s(d.note), textW);
+        rowH += noteLines.length*3.5 + 2;
+        doc.setFontSize(7);
+      }
+      if (d.photo) rowH += 22;
+
+      ensureSpace(rowH+1);
+
+      // Fondo fila
+      doc.setFillColor(...(rowIdx++%2===0 ? [255,255,255] : [248,250,252]));
+      doc.rect(ML, y, CW, rowH, 'F');
+      doc.setDrawColor(226,232,240); doc.setLineWidth(0.2);
+      doc.rect(ML, y, CW, rowH);
+      doc.line(xSI, y, xSI, y+rowH);
+      doc.line(xNO, y, xNO, y+rowH);
+      doc.line(xNA, y, xNA, y+rowH);
+
+      // Texto ítem
+      doc.setFont('helvetica','normal'); doc.setFontSize(7);
+      doc.setTextColor(30,41,59);
+      doc.text(lines, ML+2+indent, y+5);
+
+      // Observación
+      let oy = y + lines.length*4 + 5;
+      if (d.note) {
+        doc.setFont('helvetica','italic'); doc.setFontSize(6);
+        doc.setTextColor(100,116,139);
+        doc.text(noteLines, ML+2+indent, oy+2);
+        oy += noteLines.length*3.5 + 2;
+      }
+
+      // Foto
+      if (d.photo) {
+        try { doc.addImage(d.photo,'JPEG', ML+2+indent, oy+1, 24, 18); }
+        catch(e) {}
+      }
+
+      // Marca SÍ / NO / NA — cuadrado de color
+      const markCY = y + rowH/2;
+      const sq = 4.5;
+      if (d.r==='SI') { doc.setFillColor(22,163,74);  doc.rect(xSI+CSI/2-sq/2, markCY-sq/2, sq,sq,'F'); }
+      if (d.r==='NO') { doc.setFillColor(220,38,38);  doc.rect(xNO+CNO/2-sq/2, markCY-sq/2, sq,sq,'F'); }
+      if (d.r==='NA') { doc.setFillColor(107,114,128);doc.rect(xNA+CNA/2-sq/2, markCY-sq/2, sq,sq,'F'); }
+
+      y += rowH;
+    });
+
+    // Fila resumen sección
+    ensureSpace(6);
+    const spct = st.pct!==null ? st.pct+'%' : '--';
+    doc.setFillColor(240,244,250);
+    doc.rect(ML, y, CW, 5.5,'F');
+    doc.setDrawColor(226,232,240); doc.rect(ML, y, CW, 5.5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor(100,116,139);
+    doc.text('Cumplimiento: '+spct+'  |  SI: '+st.si+'  NO: '+st.no+'  NA: '+st.na+'  Sin respuesta: '+(st.total-st.answered),
+      ML+CW-2, y+4, {align:'right'});
+    y += 8;
+  });
+
+  // ── PIE DE PÁGINA en todas las hojas ────────────────────
+  const total = doc.getNumberOfPages();
+  for (let p=1; p<=total; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(226,232,240); doc.setLineWidth(0.3);
+    doc.line(ML, PH-MB, PW-MR, PH-MB);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor(148,163,184);
+    doc.text('Hospital del Salvador · Farmacia · '+s(cl.badge), ML, PH-MB+4);
+    doc.text(new Date().toLocaleString('es-CL'), PW/2, PH-MB+4, {align:'center'});
+    doc.text('Pag. '+p+' / '+total, PW-MR, PH-MB+4, {align:'right'});
+  }
+
+  return doc.output('blob');
+}
+
 async function generateAndSendPdf() {
   const btn = document.getElementById('btnFinalizar');
   btn.disabled = true;
   btn.textContent = '⏳ Generando PDF…';
 
   try {
-    const html = buildPdfHtml();
-    const container = document.createElement('div');
-    container.innerHTML = html;
-    // iOS fix: must be IN the viewport (not off-screen) for html2canvas to capture
-    container.style.cssText = 'position:fixed;top:0;left:0;width:794px;background:white;z-index:99999;opacity:0.001;pointer-events:none;overflow:visible;';
-    document.body.appendChild(container);
-
-    // Wait a tick for DOM to paint
-    await new Promise(r => setTimeout(r, 150));
-
-    const opt = {
-      margin: [8, 8, 8, 8],
-      filename: pdfFileName(),
-      image: { type: 'jpeg', quality: 0.85 },
-      html2canvas: {
-        scale: 1.5,
-        useCORS: true,
-        logging: false,
-        windowWidth: 794,
-        scrollY: 0,
-        scrollX: 0,
-        backgroundColor: '#ffffff'
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    const pdfBlob = await html2pdf().set(opt).from(container).outputPdf('blob');
-    document.body.removeChild(container);
-
     const fileName = pdfFileName();
-    const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+    const pdfBlob  = buildPdfDirect();
+    const pdfFile  = new File([pdfBlob], fileName, { type:'application/pdf' });
 
-    // Try Web Share API (mobile native share sheet)
     const shared = await tryWebShare(pdfFile, fileName);
     if (!shared) {
-      // Fallback: download + open mail
       const url = URL.createObjectURL(pdfBlob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
+      a.href = url; a.download = fileName; a.click();
       setTimeout(() => {
         URL.revokeObjectURL(url);
         window.location.href = 'mailto:mpinto@hsalvador.cl?subject=CHECKLIST%20FARMACIA%20ISP&body=Adjunto%20el%20informe%20de%20la%20visita.';
       }, 800);
     }
 
-    // Show "Nueva visita" card
     document.getElementById('nuevaVisitaCard').style.display = '';
     btn.textContent = '✅ PDF generado';
 
