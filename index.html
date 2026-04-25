@@ -314,6 +314,12 @@ html,body{font-family:Verdana,Geneva,Tahoma,sans-serif;background:var(--bg);colo
 
 <script>
 
+// ── TEST INMEDIATO (corre al instante, sin esperar DOMContentLoaded) ──
+try {
+  var _fc = document.getElementById('formContent');
+  if (_fc) _fc.innerHTML = '<div style="padding:10px;background:#fbbf24;color:#78350f;font-size:8pt;font-family:Verdana;border-radius:6px;margin:8px;">🟡 Script iniciado — esperando DOMContentLoaded...</div>';
+} catch(_e) {}
+
 /* ═══════════════════════════════════════════════════════════
    CHECKLISTS — Contenido exacto según PDFs ISP
    Tipos de ítem:
