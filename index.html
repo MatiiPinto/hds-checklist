@@ -846,10 +846,15 @@ function renderAll() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  loadState();
-  restoreMeta();
-  renderForm();
-  updateTopbar();
+  try {
+    loadState();
+    restoreMeta();
+    renderForm();
+    updateTopbar();
+  } catch(err) {
+    const fc = document.getElementById('formContent');
+    if (fc) fc.innerHTML = '<div style="padding:20px;color:#dc2626;font-size:9pt;font-family:Verdana;">⚠️ Error al iniciar: ' + err.message + '<br><small>' + err.stack + '</small></div>';
+  }
 });
 
 // ═══════════════════════════════════════════════════════════
