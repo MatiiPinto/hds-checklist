@@ -861,7 +861,9 @@ function pdfFileName() {
   // Build initials: first letter of each word, uppercase, max 4 chars
   const initials = inspector.split(/\s+/).map(w => w[0] || '').join('').toUpperCase().slice(0,4) || 'QF';
   const recinto = (state.meta.recinto || 'Recinto').trim().replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g,'').replace(/\s+/g,'-').slice(0,30);
-  const fecha = (state.meta.fecha || new Date().toISOString().slice(0,10)).replace(/-/g,'');
+  const raw = state.meta.fecha || new Date().toISOString().slice(0,10);
+  const p = raw.split('-'); // yyyy-mm-dd
+  const fecha = p.length === 3 ? `${p[2]}-${p[1]}-${p[0].slice(2)}` : raw;
   return `${initials}_${recinto}_${fecha}.pdf`;
 }
 
@@ -998,14 +1000,26 @@ async function generateAndSendPdf() {
     const html = buildPdfHtml();
     const container = document.createElement('div');
     container.innerHTML = html;
-    container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:white;';
+    // iOS fix: must be IN the viewport (not off-screen) for html2canvas to capture
+    container.style.cssText = 'position:fixed;top:0;left:0;width:794px;background:white;z-index:99999;opacity:0.001;pointer-events:none;overflow:visible;';
     document.body.appendChild(container);
+
+    // Wait a tick for DOM to paint
+    await new Promise(r => setTimeout(r, 150));
 
     const opt = {
       margin: [8, 8, 8, 8],
       filename: pdfFileName(),
-      image: { type: 'jpeg', quality: 0.88 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
+      image: { type: 'jpeg', quality: 0.85 },
+      html2canvas: {
+        scale: 1.5,
+        useCORS: true,
+        logging: false,
+        windowWidth: 794,
+        scrollY: 0,
+        scrollX: 0,
+        backgroundColor: '#ffffff'
+      },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
