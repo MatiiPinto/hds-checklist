@@ -850,14 +850,19 @@ function renderAll() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  const fc = document.getElementById('formContent');
+  const dbg = msg => { if (fc) fc.innerHTML = '<div style="padding:12px;color:#1D2D5B;font-size:8pt;font-family:Verdana;background:#fef3c7;border-radius:8px;margin:8px;">' + msg + '</div>'; };
   try {
+    dbg('1/4 — loadState...');
     loadState();
+    dbg('2/4 — restoreMeta...');
     restoreMeta();
+    dbg('3/4 — renderForm...');
     renderForm();
+    dbg('4/4 — updateTopbar...');
     updateTopbar();
   } catch(err) {
-    const fc = document.getElementById('formContent');
-    if (fc) fc.innerHTML = '<div style="padding:20px;color:#dc2626;font-size:9pt;font-family:Verdana;">⚠️ Error al iniciar: ' + err.message + '<br><small>' + err.stack + '</small></div>';
+    dbg('❌ ERROR: ' + String(err && err.message ? err.message : err) + ' | stack: ' + String(err && err.stack ? err.stack.slice(0,200) : ''));
   }
 });
 
