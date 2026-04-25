@@ -870,7 +870,7 @@ function buildPdfHtml() {
   const m = state.meta;
   const stats = overallStats();
   const pct = stats.pct !== null ? stats.pct + '%' : '—';
-  const pctColor = stats.pct === null ? '#64748b' : stats.pct >= 80 ? '#16a34a' : stats.pct >= 60 ? '#d97706' : '#dc2626';
+  const overallColor = stats.pct === null ? '#64748b' : stats.pct >= 80 ? '#16a34a' : stats.pct >= 60 ? '#d97706' : '#dc2626';
 
   let sectionsHtml = '';
   cl.sections.forEach(sec => {
@@ -959,7 +959,7 @@ function buildPdfHtml() {
           <div style="font-size:7.5pt;color:#475569;">${cl.badge}</div>
         </div>
         <div style="text-align:center;background:#f0f4fa;border:2px solid #1D2D5B;border-radius:6px;padding:5px 10px;">
-          <div style="font-size:16pt;font-weight:bold;color:${pctColor};">${pct}</div>
+          <div style="font-size:16pt;font-weight:bold;color:${overallColor};">${pct}</div>
           <div style="font-size:6pt;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">Cumplimiento</div>
         </div>
       </div>
