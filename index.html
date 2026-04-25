@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAADj0lEQVR4nO3du3UTURRAUcmLkBagA9wQNEJAREAjuCG7A9wCOUSw+MiWxjOj+Zy9C5DeYt0z940CfDws7M279z+WPgPLeny4Oy713Vf/YgPPOdcM4ipfZOh5qbljmPXDDT5TmSuEWT7U4DOXqUOY9MMMPtcyVQiTfIjBZyljQ7gZewDDz5LGzt+oAAw/azBmDl+0Pgw+azX0SjR4Axh+1mzofA4KwPCzBUPm9OIADD9bcum8XhSA4WeLLpnb0T+DwpadDcDTny07N7/PBmD42YPn5vjJAAw/e/LUPHsHIO1kAJ7+7NGpubYBSPsvAE9/9uzf+bYBSPsrAE9/Cv6ccxuAtN8BePpT8mvebQDSBEDa8XBw/aHLBiBNAKQJgLQb93/KbADSBECaAEgTAGkCIE0ApL1a+gBr9+3+69JHGO3t7Yelj7BaNgBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIW/UfyHj96cvSR9iFNfw7fv/8cekjnGQDkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgLTjm3fvfyx9iDX7dv916SOM9vb2w9JHWC0bgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKT5Axmk2QCkCYA0AZAmANIEQJoASLt5fLg7Ln0IWIoNQJoASBMAaTeHw+HgPYCix4e7ow1AmgBI+x2AaxAlv+bdBiDtrwBsAQr+nHMbgLT/ArAF2LN/59sGIO1kALYAe3Rqrm0A0p4MwBZgT56a52c3gAjYg+fm+OwVSARs2bn59Q5A2kUB2AJs0SVze/EGEAFbcum8DroCiYAtGDKng98BRMCaDZ3PUcPsf5ZmLV76YB71K5BtwBqMmcPRP4OKgCWNnb9Jh9eViGuZ6sE7y9NbCMxl6hvHrNcXITCVua7aV7m/C4GXmvsd8+ovsGLgnGv+sPITXGC5KDmvylAAAAAASUVORK5CYII=">
 <title>Checklist Farmacia · HDS</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- jsPDF se carga dinámicamente al generar PDF para no bloquear el inicio -->
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -992,10 +992,7 @@ function buildPdfHtml() {
 }
 
 // Genera el PDF directamente con jsPDF (sin html2canvas — funciona en iOS)
-function buildPdfDirect() {
-  // Soporta jsPDF 2.x (window.jspdf.jsPDF) y 1.x (window.jsPDF)
-  const jsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-  if (!jsPDF) throw new Error('jsPDF no cargó. Verifica tu conexión a internet e intenta de nuevo.');
+function buildPdfDirect(jsPDF) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
   // Sanitiza texto para jsPDF (Latin-1 + español)
@@ -1193,14 +1190,35 @@ function buildPdfDirect() {
   return doc.output('blob');
 }
 
+// Carga jsPDF dinámicamente (no bloquea el inicio de la app)
+function loadJsPDF() {
+  return new Promise((resolve, reject) => {
+    // Ya cargado previamente
+    const ctor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if (ctor) { resolve(ctor); return; }
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload = () => {
+      const c = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      c ? resolve(c) : reject(new Error('jsPDF no disponible tras carga'));
+    };
+    script.onerror = () => reject(new Error('No se pudo descargar jsPDF. Verifica tu conexión.'));
+    document.head.appendChild(script);
+  });
+}
+
 async function generateAndSendPdf() {
   const btn = document.getElementById('btnFinalizar');
   btn.disabled = true;
-  btn.textContent = '⏳ Generando PDF…';
+  btn.textContent = '⏳ Cargando generador…';
 
   try {
+    // Cargar jsPDF solo cuando se necesita
+    const jsPDFCtor = await loadJsPDF();
+    btn.textContent = '⏳ Generando PDF…';
+
     const fileName = pdfFileName();
-    const pdfBlob  = buildPdfDirect();
+    const pdfBlob  = buildPdfDirect(jsPDFCtor);
     const pdfFile  = new File([pdfBlob], fileName, { type:'application/pdf' });
 
     const shared = await tryWebShare(pdfFile, fileName);
