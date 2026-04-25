@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════════════════════
    Service Worker — Checklist Farmacia HDS
-   Versión: 1.0 · Hospital del Salvador
+   Versión: 2.0 · Hospital del Salvador
    Estrategia: Cache-first para todos los assets estáticos
 ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'hds-checklist-v1';
+const CACHE_NAME = 'hds-checklist-v2';
 const ASSETS = [
-  './8.ChecklistFarmacia.html',
+  './index.html',
   './manifest.json',
 ];
 

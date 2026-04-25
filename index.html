@@ -9,6 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAADj0lEQVR4nO3du3UTURRAUcmLkBagA9wQNEJAREAjuCG7A9wCOUSw+MiWxjOj+Zy9C5DeYt0z940CfDws7M279z+WPgPLeny4Oy713Vf/YgPPOdcM4ipfZOh5qbljmPXDDT5TmSuEWT7U4DOXqUOY9MMMPtcyVQiTfIjBZyljQ7gZewDDz5LGzt+oAAw/azBmDl+0Pgw+azX0SjR4Axh+1mzofA4KwPCzBUPm9OIADD9bcum8XhSA4WeLLpnb0T+DwpadDcDTny07N7/PBmD42YPn5vjJAAw/e/LUPHsHIO1kAJ7+7NGpubYBSPsvAE9/9uzf+bYBSPsrAE9/Cv6ccxuAtN8BePpT8mvebQDSBEDa8XBw/aHLBiBNAKQJgLQb93/KbADSBECaAEgTAGkCIE0ApL1a+gBr9+3+69JHGO3t7Yelj7BaNgBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIW/UfyHj96cvSR9iFNfw7fv/8cekjnGQDkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgLTjm3fvfyx9iDX7dv916SOM9vb2w9JHWC0bgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKQJgDQBkCYA0gRAmgBIEwBpAiBNAKT5Axmk2QCkCYA0AZAmANIEQJoASLt5fLg7Ln0IWIoNQJoASBMAaTeHw+HgPYCix4e7ow1AmgBI+x2AaxAlv+bdBiDtrwBsAQr+nHMbgLT/ArAF2LN/59sGIO1kALYAe3Rqrm0A0p4MwBZgT56a52c3gAjYg+fm+OwVSARs2bn59Q5A2kUB2AJs0SVze/EGEAFbcum8DroCiYAtGDKng98BRMCaDZ3PUcPsf5ZmLV76YB71K5BtwBqMmcPRP4OKgCWNnb9Jh9eViGuZ6sE7y9NbCMxl6hvHrNcXITCVua7aV7m/C4GXmvsd8+ovsGLgnGv+sPITXGC5KDmvylAAAAAASUVORK5CYII=">
 <title>Checklist Farmacia · HDS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -240,27 +241,41 @@ html,body{font-family:Verdana,Geneva,Tahoma,sans-serif;background:var(--bg);colo
   <div class="tab-content" id="tab-export">
     <div class="scroll-area">
       <div class="export-wrap">
+
+        <!-- FINALIZAR Y ENVIAR -->
+        <div class="export-card" style="border:2px solid #1D2D5B;">
+          <div class="export-title">📋 Finalizar Visita</div>
+          <div style="font-size:8pt;color:#475569;margin-bottom:10px;line-height:1.6;">
+            Genera el informe PDF con formato ISP y lo envía a<br>
+            <strong>mpinto@hsalvador.cl</strong> — Asunto: CHECKLIST FARMACIA ISP
+          </div>
+          <button class="export-btn" id="btnFinalizar"
+            style="background:#1D2D5B;color:white;font-size:11pt;"
+            onclick="generateAndSendPdf()">
+            📤 Finalizar y enviar por correo
+          </button>
+        </div>
+
+        <!-- NUEVA VISITA (aparece tras enviar) -->
+        <div class="export-card" id="nuevaVisitaCard" style="display:none;background:#dcfce7;border:2px solid #16a34a;">
+          <div class="export-title" style="color:#15803d;">✅ Informe enviado</div>
+          <div style="font-size:8pt;color:#166534;margin-bottom:10px;">
+            El PDF fue generado correctamente. ¿Iniciar revisión del siguiente recinto?
+          </div>
+          <button class="export-btn" style="background:#16a34a;color:white;" onclick="startNewVisit()">
+            🔄 Nueva visita / Siguiente recinto
+          </button>
+        </div>
+
+        <!-- OPCIONES SECUNDARIAS -->
         <div class="export-card">
-          <div class="export-title">Exportar / Compartir</div>
+          <div class="export-title" style="font-size:8pt;">Otras opciones</div>
           <button class="export-btn eb-print" onclick="doPrint()">🖨️ Imprimir lista de chequeo</button>
           <button class="export-btn eb-save" onclick="doSave()">💾 Guardar datos (JSON)</button>
-          <button class="export-btn eb-share" onclick="doShare()">📤 Compartir resumen</button>
         </div>
         <div class="export-card">
-          <div class="export-title" style="color:#dc2626;">⚠️ Zona de Peligro</div>
+          <div class="export-title" style="color:#dc2626;font-size:8pt;">⚠️ Zona de Peligro</div>
           <button class="export-btn eb-clear" onclick="doClear()">🗑 Borrar todos los datos de esta pauta</button>
-        </div>
-        
-        <div class="export-card" style="background:#e0f2fe;border:1.5px solid #bae6fd;">
-          <div class="export-title" style="color:#0369a1;">📲 Instalar en iPhone (iOS)</div>
-          <div style="font-size:8pt;color:#0c4a6e;line-height:1.8;">
-            1. Abre esta página en <strong>Safari</strong><br>
-            2. Toca el botón <strong>Compartir</strong> (📤) en la barra inferior<br>
-            3. Selecciona <strong>"Añadir a pantalla de inicio"</strong><br>
-            4. Toca <strong>Añadir</strong> — ¡listo!<br>
-            <br>
-            En Android, Chrome mostrará automáticamente el aviso de instalación arriba.
-          </div>
         </div>
         <div class="export-card" style="background:#f0f4fa;">
           <div style="font-size:8pt;color:#475569;line-height:1.7;">
@@ -268,8 +283,7 @@ html,body{font-family:Verdana,Geneva,Tahoma,sans-serif;background:var(--bg);colo
             • Los datos se guardan automáticamente en este dispositivo.<br>
             • Cada pauta (Funcionamiento / Instalación) guarda sus datos por separado.<br>
             • <strong>SÍ</strong> = cumple &nbsp; <strong>NO</strong> = no cumple &nbsp; <strong>NA</strong> = no aplica<br>
-            • El % de cumplimiento excluye los ítems marcados como NA.<br>
-            • Los ítems de cabecera (agrupadores) no se contabilizan en el %.
+            • El % de cumplimiento excluye los ítems marcados como NA.
           </div>
         </div>
       </div>
@@ -837,6 +851,246 @@ window.addEventListener('DOMContentLoaded', () => {
   renderForm();
   updateTopbar();
 });
+
+// ═══════════════════════════════════════════════════════════
+//  PDF GENERATION & SEND
+// ═══════════════════════════════════════════════════════════
+
+function pdfFileName() {
+  const inspector = (state.meta.inspector || 'QF').trim();
+  // Build initials: first letter of each word, uppercase, max 4 chars
+  const initials = inspector.split(/\s+/).map(w => w[0] || '').join('').toUpperCase().slice(0,4) || 'QF';
+  const recinto = (state.meta.recinto || 'Recinto').trim().replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g,'').replace(/\s+/g,'-').slice(0,30);
+  const fecha = (state.meta.fecha || new Date().toISOString().slice(0,10)).replace(/-/g,'');
+  return `${initials}_${recinto}_${fecha}.pdf`;
+}
+
+function buildPdfHtml() {
+  const cl = CHECKLISTS[state.cl];
+  const m = state.meta;
+  const stats = overallStats();
+  const pct = stats.pct !== null ? stats.pct + '%' : '—';
+  const pctColor = stats.pct === null ? '#64748b' : stats.pct >= 80 ? '#16a34a' : stats.pct >= 60 ? '#d97706' : '#dc2626';
+
+  let sectionsHtml = '';
+  cl.sections.forEach(sec => {
+    const st = sectionStats(sec);
+    const spct = st.pct !== null ? st.pct + '%' : '—';
+    const scol = pctColor(st.pct);
+
+    let rowsHtml = '';
+    let rowIdx = 0;
+    sec.items.forEach((item, idx) => {
+      if (item.group) {
+        rowsHtml += `
+          <tr>
+            <td colspan="4" style="background:#dce3f0;font-weight:bold;font-size:7pt;
+              padding:4px 6px;color:#1D2D5B;border:1px solid #b0b8cc;">
+              ${item.t}
+            </td>
+          </tr>`;
+        return;
+      }
+
+      const d = getItem(sec.id, idx);
+      const siMark = d.r === 'SI' ? '✓' : '';
+      const noMark = d.r === 'NO' ? '✓' : '';
+      const naMark = d.r === 'NA' ? '✓' : '';
+      const rowBg = rowIdx++ % 2 === 0 ? '#ffffff' : '#f8fafc';
+      const indent = item.indent ? 'padding-left:18px;' : '';
+
+      let obsHtml = '';
+      if (d.note) {
+        obsHtml += `<div style="font-size:6.5pt;color:#475569;margin-top:2px;font-style:italic;">📝 ${d.note}</div>`;
+      }
+      if (d.photo) {
+        obsHtml += `<div style="margin-top:3px;"><img src="${d.photo}" style="max-width:80px;max-height:60px;border-radius:3px;border:1px solid #cbd5e1;"></div>`;
+      }
+
+      rowsHtml += `
+        <tr style="background:${rowBg};">
+          <td style="padding:4px 6px;${indent}font-size:7pt;border:1px solid #e2e8f0;vertical-align:top;">
+            ${item.t}${obsHtml}
+          </td>
+          <td style="text-align:center;font-size:9pt;color:#16a34a;font-weight:bold;border:1px solid #e2e8f0;width:28px;">${siMark}</td>
+          <td style="text-align:center;font-size:9pt;color:#dc2626;font-weight:bold;border:1px solid #e2e8f0;width:28px;">${noMark}</td>
+          <td style="text-align:center;font-size:9pt;color:#6b7280;font-weight:bold;border:1px solid #e2e8f0;width:28px;">${naMark}</td>
+        </tr>`;
+    });
+
+    sectionsHtml += `
+      <div style="margin-bottom:10px;">
+        <table style="width:100%;border-collapse:collapse;font-family:Verdana,Geneva,Tahoma,sans-serif;">
+          <thead>
+            <tr style="background:#1D2D5B;">
+              <th style="text-align:left;padding:5px 6px;color:white;font-size:7.5pt;border:1px solid #1D2D5B;">
+                ${sec.icon} ${sec.title}
+              </th>
+              <th style="text-align:center;padding:5px 4px;color:white;font-size:7pt;border:1px solid #1D2D5B;width:28px;">SÍ</th>
+              <th style="text-align:center;padding:5px 4px;color:white;font-size:7pt;border:1px solid #1D2D5B;width:28px;">NO</th>
+              <th style="text-align:center;padding:5px 4px;color:white;font-size:7pt;border:1px solid #1D2D5B;width:28px;">NA</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+            <tr style="background:#f0f4fa;">
+              <td colspan="4" style="padding:3px 6px;font-size:6.5pt;color:#475569;border:1px solid #e2e8f0;text-align:right;">
+                Cumplimiento: <strong style="color:${scol};">${spct}</strong>
+                &nbsp;|&nbsp; SÍ: ${st.si} &nbsp; NO: ${st.no} &nbsp; NA: ${st.na} &nbsp; Sin respuesta: ${st.total - st.answered}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+  });
+
+  return `
+    <div style="font-family:Verdana,Geneva,Tahoma,sans-serif;padding:12px;max-width:780px;margin:0 auto;">
+
+      <!-- HEADER -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding-bottom:8px;border-bottom:3px solid #1D2D5B;">
+        <div style="background:#1D2D5B;color:white;padding:6px 12px;border-radius:6px;font-size:9pt;font-weight:bold;white-space:nowrap;">
+          Hospital del Salvador
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:11pt;font-weight:bold;color:#1D2D5B;">
+            Pauta de Visita — ${cl.label} de Farmacia
+          </div>
+          <div style="font-size:7.5pt;color:#475569;">${cl.badge}</div>
+        </div>
+        <div style="text-align:center;background:#f0f4fa;border:2px solid #1D2D5B;border-radius:6px;padding:5px 10px;">
+          <div style="font-size:16pt;font-weight:bold;color:${pctColor};">${pct}</div>
+          <div style="font-size:6pt;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">Cumplimiento</div>
+        </div>
+      </div>
+
+      <!-- IDENTIFICATION -->
+      <table style="width:100%;border-collapse:collapse;margin-bottom:10px;font-size:7.5pt;">
+        <tr>
+          <td style="padding:4px 8px;background:#f0f4fa;border:1px solid #e2e8f0;width:25%;"><strong>Piso:</strong> ${m.piso || '—'}</td>
+          <td style="padding:4px 8px;background:#f0f4fa;border:1px solid #e2e8f0;width:25%;"><strong>Servicio:</strong> ${m.servicio || '—'}</td>
+          <td style="padding:4px 8px;background:#f0f4fa;border:1px solid #e2e8f0;width:25%;"><strong>Fecha:</strong> ${m.fecha || '—'}</td>
+          <td style="padding:4px 8px;background:#f0f4fa;border:1px solid #e2e8f0;width:25%;"><strong>QF/Inspector:</strong> ${m.inspector || '—'}</td>
+        </tr>
+        <tr>
+          <td colspan="2" style="padding:4px 8px;background:#f0f4fa;border:1px solid #e2e8f0;"><strong>Recinto:</strong> ${m.recinto || '—'}</td>
+          <td colspan="2" style="padding:4px 8px;background:#f0f4fa;border:1px solid #e2e8f0;"><strong>Código plano:</strong> ${m.codigo || '—'}</td>
+        </tr>
+      </table>
+
+      <!-- SECTIONS -->
+      ${sectionsHtml}
+
+      <!-- FOOTER -->
+      <div style="margin-top:12px;padding-top:6px;border-top:1px solid #e2e8f0;font-size:6.5pt;color:#94a3b8;display:flex;justify-content:space-between;">
+        <span>Hospital del Salvador · Farmacia · Pauta ISP · ${cl.badge}</span>
+        <span>Generado: ${new Date().toLocaleString('es-CL')}</span>
+      </div>
+    </div>`;
+}
+
+async function generateAndSendPdf() {
+  const btn = document.getElementById('btnFinalizar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generando PDF…';
+
+  try {
+    const html = buildPdfHtml();
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:white;';
+    document.body.appendChild(container);
+
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: pdfFileName(),
+      image: { type: 'jpeg', quality: 0.88 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    const pdfBlob = await html2pdf().set(opt).from(container).outputPdf('blob');
+    document.body.removeChild(container);
+
+    const fileName = pdfFileName();
+    const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+    // Try Web Share API (mobile native share sheet)
+    const shared = await tryWebShare(pdfFile, fileName);
+    if (!shared) {
+      // Fallback: download + open mail
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        window.location.href = 'mailto:mpinto@hsalvador.cl?subject=CHECKLIST%20FARMACIA%20ISP&body=Adjunto%20el%20informe%20de%20la%20visita.';
+      }, 800);
+    }
+
+    // Show "Nueva visita" card
+    document.getElementById('nuevaVisitaCard').style.display = '';
+    btn.textContent = '✅ PDF generado';
+
+  } catch(err) {
+    console.error(err);
+    btn.disabled = false;
+    btn.textContent = '📤 Finalizar y enviar por correo';
+    alert('Error al generar el PDF: ' + err.message);
+  }
+}
+
+async function tryWebShare(file, fileName) {
+  try {
+    if (!navigator.share || !navigator.canShare) return false;
+    const shareData = {
+      title: 'Checklist Farmacia ISP',
+      text: 'Informe de visita — Hospital del Salvador',
+      files: [file]
+    };
+    if (!navigator.canShare(shareData)) return false;
+    await navigator.share(shareData);
+    return true;
+  } catch(e) {
+    if (e.name === 'AbortError') return true; // user cancelled — that's fine
+    return false;
+  }
+}
+
+function startNewVisit() {
+  if (!confirm('¿Iniciar revisión de un nuevo recinto? Los datos actuales se borrarán de este dispositivo.')) return;
+
+  // Clear all checklist data for current checklist type
+  try { localStorage.removeItem(storageKey()); } catch(e) {}
+
+  // Reset state
+  state.data = {};
+  state.meta = {
+    piso: state.meta.piso,      // keep piso and servicio for convenience
+    servicio: state.meta.servicio,
+    recinto: '',
+    codigo: '',
+    fecha: new Date().toISOString().slice(0,10),
+    inspector: state.meta.inspector
+  };
+  state.openSections = allSectionIds();
+
+  // Hide nueva visita card, restore button
+  document.getElementById('nuevaVisitaCard').style.display = 'none';
+  const btn = document.getElementById('btnFinalizar');
+  btn.disabled = false;
+  btn.textContent = '📤 Finalizar y enviar por correo';
+
+  // Go to form tab and open meta card so user fills recinto/codigo
+  state.metaOpen = true;
+  document.getElementById('metaFields').classList.remove('hidden');
+  document.getElementById('metaIcon').classList.add('open');
+  restoreMeta();
+  setTab('form');
+  saveState();
+}
 
 // ═══ PWA: Service Worker + Install ═══
 if ('serviceWorker' in navigator) {
