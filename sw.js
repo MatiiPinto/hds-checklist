@@ -1,10 +1,10 @@
 /* ═══════════════════════════════════════════════════════════
    Service Worker — Checklist Farmacia HDS
-   Versión: 3.0 · Hospital del Salvador
+   Versión: 4.0 · Hospital del Salvador
    Estrategia: Network-first para index.html, cache-first resto
 ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'hds-checklist-v3';
+const CACHE_NAME = 'hds-checklist-v4';
 const ASSETS = [
   './index.html',
   './manifest.json',
