@@ -4,7 +4,7 @@
    Estrategia: Network-first para index.html, cache-first resto
 ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'hds-checklist-v4';
+const CACHE_NAME = 'hds-checklist-v4.1';
 const ASSETS = [
   './index.html',
   './manifest.json',
